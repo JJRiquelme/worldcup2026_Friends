@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mundial 2026 — Pool de amigos</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f3;color:#1a1a1a;min-height:100vh}
+.container{max-width:640px;margin:0 auto;padding:0 16px 80px}
+.page-header{background:#fff;border-bottom:1px solid #e5e5e5;padding:20px 16px;margin:0 -16px 24px;text-align:center}
+.page-header h1{font-size:22px;font-weight:600;letter-spacing:-0.3px}
+.page-header p{font-size:13px;color:#888;margin-top:4px}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:20px;margin-bottom:14px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:14px}
+.field{margin-bottom:12px}
+label{display:block;font-size:13px;font-weight:500;color:#555;margin-bottom:5px}
+input[type=text]{width:100%;padding:10px 12px;font-size:15px;border:1px solid #d5d5d5;border-radius:8px;outline:none;transition:border-color .15s;background:#fff;color:#1a1a1a}
+input[type=text]:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.emoji-btn{width:42px;height:42px;font-size:22px;border:1.5px solid #e5e5e5;border-radius:8px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.emoji-btn.sel{border-color:#6366f1;background:#eef2ff}
+.btn-main{width:100%;padding:13px;font-size:15px;font-weight:600;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:6px;transition:opacity .15s}
+.btn-main:disabled{opacity:.35;cursor:not-allowed}
+.btn-main:hover:not(:disabled){opacity:.8}
+.progress-label{font-size:13px;color:#666;display:flex;justify-content:space-between;margin-bottom:5px}
+.progress-wrap{background:#f0f0f0;border-radius:99px;height:5px;margin-bottom:18px;overflow:hidden}
+.progress-bar{height:100%;background:#6366f1;border-radius:99px;transition:width .3s}
+.group-header{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#aaa;padding:10px 0 6px;border-bottom:1px solid #f0f0f0}
+.match-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f7f7f7}
+.match-row:last-child{border-bottom:none}
+.match-teams{flex:1;font-size:13px;color:#333;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.match-btns{display:flex;gap:4px;flex-shrink:0}
+.pb{width:38px;height:34px;font-size:12px;font-weight:500;border:1px solid #ddd;border-radius:6px;background:#fff;color:#666;cursor:pointer;transition:all .1s}
+.pb:hover:not(.a1):not(.ax):not(.a2){background:#f5f5f5}
+.pb.a1{background:#dbeafe;border-color:#3b82f6;color:#1d4ed8}
+.pb.ax{background:#fef3c7;border-color:#f59e0b;color:#92400e}
+.pb.a2{background:#fce7f3;border-color:#ec4899;color:#9d174d}
+.champ-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.cb{padding:7px 8px;font-size:12px;border:1px solid #e5e5e5;border-radius:6px;background:#fff;color:#333;cursor:pointer;text-align:left}
+.cb.sel{background:#eef2ff;border-color:#6366f1;color:#3730a3;font-weight:500}
+.cb:hover:not(.sel){background:#f9f9f9}
+.sticky{position:sticky;bottom:0;background:#fff;border-top:1px solid #e5e5e5;padding:12px 16px;margin:0 -16px}
+.alert{border-radius:8px;padding:12px 14px;font-size:14px;margin-bottom:12px}
+.alert-err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.alert-ok{background:#f0fdf4;border:1px solid #86efac;color:#14532d}
+.success-box{text-align:center;padding:32px 20px}
+.success-box .icon{font-size:52px;margin-bottom:12px}
+.success-box h3{font-size:20px;font-weight:600;margin-bottom:8px}
+.success-box p{font-size:14px;color:#666}
+.checking{text-align:center;padding:24px;color:#888;font-size:14px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="page-header">
+    <h1>⚽ Mundial 2026 · Pool</h1>
+    <p>USA · Canadá · México — 11 Jun al 19 Jul</p>
+  </div>
+
+  <!-- FASE 1: Identidad -->
+  <div id="phase-identity">
+    <div class="card">
+      <h2>¿Quién eres?</h2>
+      <div class="field">
+        <label>Nombre</label>
+        <input type="text" id="inp-name" placeholder="Ej. Juan" oninput="checkIdentityReady()">
+      </div>
+      <div class="field">
+        <label>Apellido</label>
+        <input type="text" id="inp-surname" placeholder="Ej. García" oninput="checkIdentityReady()">
+      </div>
+      <div class="field">
+        <label>Elige un emoji para identificarte</label>
+        <div class="emoji-grid" id="emoji-grid"></div>
+      </div>
+      <div id="identity-err" class="alert alert-err hidden"></div>
+      <button class="btn-main" id="btn-check" onclick="checkIdentity()" disabled>Comprobar y continuar →</button>
+    </div>
+  </div>
+
+  <!-- FASE 2: Comprobando -->
+  <div id="phase-checking" class="hidden">
+    <div class="card">
+      <div class="checking">⏳ Comprobando... un momento</div>
+    </div>
+  </div>
+
+  <!-- FASE 3: Formulario de predicciones -->
+  <div id="phase-form" class="hidden">
+    <div class="card" style="background:#eef2ff;border-color:#c7d2fe">
+      <p style="font-size:13px;color:#3730a3">
+        <strong id="form-greeting"></strong><br>
+        Completa las 72 predicciones de la fase de grupos y elige tu campeón.
+        Solo puedes enviar <strong>una vez</strong> — no hay modificaciones.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="progress-label">
+        <span>Progreso</span>
+        <span id="progress-count">0 / 73</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+
+      <div id="matches-container"></div>
+    </div>
+
+    <div class="card">
+      <h2>🏆 Campeón del Mundial</h2>
+      <div class="champ-grid" id="champ-grid"></div>
+    </div>
+
+    <div id="form-err" class="alert alert-err hidden"></div>
+
+    <div class="sticky">
+      <button class="btn-main" id="btn-submit" onclick="submitPredictions()" disabled>
+        Enviar predicciones →
+      </button>
+    </div>
+  </div>
+
+  <!-- FASE 4: Éxito -->
+  <div id="phase-success" class="hidden">
+    <div class="card">
+      <div class="success-box">
+        <div class="icon">🎉</div>
+        <h3>¡Predicciones enviadas!</h3>
+        <p id="success-msg"></p>
+        <p style="margin-top:12px;font-size:13px;color:#aaa">
+          Comprueba el marcador en <a href="leaderboard.html" style="color:#6366f1">leaderboard.html</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────
+// ⚠️  PON AQUÍ TU TOKEN DE GITHUB (fine-grained PAT)
+//    Ajustes → Developer Settings → Fine-grained tokens
+//    Permisos: Contents → Read & Write  (solo este repo)
+//    ¡Revoca el token después de la fecha límite de envíos!
+// ─────────────────────────────────────────────────
+const CONFIG = {
+  token:  'ghp_REPLACE_WITH_YOUR_FINE_GRAINED_TOKEN',
+  owner:  'JJRiquelme',
+  repo:   'worldcup2026_Friends',
+  branch: 'main'
+};
+
+const EMOJIS = ['🦁','🐯','🦊','🐺','🦅','🦋','🦈','🐉','🚀','⚡','🔥','🌊','🎯','💥','🏆','⭐','🎸','🎲','🧪','🤖'];
+
+const GROUPS = {
+  A:{name:'Grupo A',teams:['Mexico','South Africa','South Korea','Czech Republic']},
+  B:{name:'Grupo B',teams:['Canada','Bosnia-Herzegovina','Qatar','Switzerland']},
+  C:{name:'Grupo C',teams:['Brazil','Morocco','Haiti','Scotland']},
+  D:{name:'Grupo D',teams:['USA','Paraguay','Australia','Türkiye']},
+  E:{name:'Grupo E',teams:['Germany','Curaçao','Ivory Coast','Ecuador']},
+  F:{name:'Grupo F',teams:['Netherlands','Japan','Sweden','Tunisia']},
+  G:{name:'Grupo G',teams:['Belgium','Egypt','Iran','New Zealand']},
+  H:{name:'Grupo H',teams:['Spain','Cape Verde','Saudi Arabia','Uruguay']},
+  I:{name:'Grupo I',teams:['France','Senegal','Iraq','Norway']},
+  J:{name:'Grupo J',teams:['Argentina','Algeria','Austria','Jordan']},
+  K:{name:'Grupo K',teams:['Portugal','DR Congo','Uzbekistan','Colombia']},
+  L:{name:'Grupo L',teams:['England','Croatia','Ghana','Panama']}
+};
+
+const ALL_TEAMS = Object.values(GROUPS).flatMap(g => g.teams);
+
+let selectedEmoji = '';
+let predictions = {};
+let selectedChampion = '';
+
+// ─── Emoji picker ───────────────────────────────
+const grid = document.getElementById('emoji-grid');
+EMOJIS.forEach(e => {
+  const btn = document.createElement('button');
+  btn.className = 'emoji-btn';
+  btn.textContent = e;
+  btn.onclick = () => {
+    document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    selectedEmoji = e;
+    checkIdentityReady();
+  };
+  grid.appendChild(btn);
+});
+
+function checkIdentityReady() {
+  const name = document.getElementById('inp-name').value.trim();
+  const surname = document.getElementById('inp-surname').value.trim();
+  document.getElementById('btn-check').disabled = !(name && surname && selectedEmoji);
+}
+
+// ─── Normalize filename ─────────────────────────
+function normalizeStr(s) {
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+}
+function getFilename(name, surname) {
+  return `${normalizeStr(surname)}_${normalizeStr(name)}.json`;
+}
+
+// ─── GitHub API helpers ─────────────────────────
+const API = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
+const HEADERS = {
+  'Authorization': `Bearer ${CONFIG.token}`,
+  'Accept': 'application/vnd.github+json',
+  'X-GitHub-Api-Version': '2022-11-28'
+};
+
+async function fileExists(path) {
+  const res = await fetch(`${API}/${path}`, { headers: HEADERS });
+  return res.status === 200;
+}
+
+async function createFile(path, content, message) {
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))));
+  const res = await fetch(`${API}/${path}`, {
+    method: 'PUT',
+    headers: { ...HEADERS, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, content: encoded, branch: CONFIG.branch })
+  });
+  return res;
+}
+
+// ─── Phase 1 → 2: Check identity ────────────────
+async function checkIdentity() {
+  const name = document.getElementById('inp-name').value.trim();
+  const surname = document.getElementById('inp-surname').value.trim();
+  const errEl = document.getElementById('identity-err');
+
+  show('phase-checking'); hide('phase-identity');
+
+  try {
+    const filename = getFilename(name, surname);
+    const exists = await fileExists(`data/predictions/${filename}`);
+    if (exists) {
+      show('phase-identity'); hide('phase-checking');
+      errEl.textContent = `❌ ${name} ${surname} ya ha enviado sus predicciones. Solo se permite un envío por persona.`;
+      errEl.classList.remove('hidden');
+      return;
+    }
+    // Also check localStorage as secondary guard
+    if (localStorage.getItem(`wc2026_submitted_${filename}`)) {
+      show('phase-identity'); hide('phase-checking');
+      errEl.textContent = `❌ Ya enviaste tus predicciones desde este navegador.`;
+      errEl.classList.remove('hidden');
+      return;
+    }
+    buildForm(name, surname);
+  } catch(e) {
+    show('phase-identity'); hide('phase-checking');
+    errEl.textContent = `⚠️ Error al conectar con GitHub. Comprueba la conexión y vuelve a intentarlo.`;
+    errEl.classList.remove('hidden');
+  }
+}
+
+// ─── Phase 3: Build form ─────────────────────────
+function buildForm(name, surname) {
+  document.getElementById('form-greeting').textContent = `Hola, ${selectedEmoji} ${name} ${surname}`;
+
+  const container = document.getElementById('matches-container');
+  container.innerHTML = '';
+
+  for (const [letter, group] of Object.entries(GROUPS)) {
+    const header = document.createElement('div');
+    header.className = 'group-header';
+    header.textContent = group.name;
+    container.appendChild(header);
+
+    const teams = group.teams;
+    for (let i = 0; i < teams.length; i++) {
+      for (let j = i + 1; j < teams.length; j++) {
+        const matchId = `${letter}${matchIndex(i, j)}`;
+        const row = document.createElement('div');
+        row.className = 'match-row';
+        row.innerHTML = `
+          <div class="match-teams">${teams[i]} <span style="color:#bbb">vs</span> ${teams[j]}</div>
+          <div class="match-btns">
+            <button class="pb" data-mid="${matchId}" data-val="1" onclick="setPred('${matchId}','1',this)">1</button>
+            <button class="pb" data-mid="${matchId}" data-val="X" onclick="setPred('${matchId}','X',this)">X</button>
+            <button class="pb" data-mid="${matchId}" data-val="2" onclick="setPred('${matchId}','2',this)">2</button>
+          </div>`;
+        container.appendChild(row);
+      }
+    }
+  }
+
+  // Champion grid
+  const champGrid = document.getElementById('champ-grid');
+  champGrid.innerHTML = '';
+  ALL_TEAMS.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'cb';
+    btn.textContent = t;
+    btn.onclick = () => {
+      document.querySelectorAll('.cb').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      selectedChampion = t;
+      updateProgress();
+    };
+    champGrid.appendChild(btn);
+  });
+
+  hide('phase-checking');
+  show('phase-form');
+  updateProgress();
+}
+
+function matchIndex(i, j) {
+  const pairs = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+  return pairs.findIndex(p => p[0]===i && p[1]===j) + 1;
+}
+
+// ─── Prediction buttons ──────────────────────────
+function setPred(matchId, val, btn) {
+  predictions[matchId] = val;
+  const parent = btn.closest('.match-btns');
+  parent.querySelectorAll('.pb').forEach(b => b.className = 'pb');
+  const cls = val === '1' ? 'a1' : val === 'X' ? 'ax' : 'a2';
+  btn.classList.add(cls);
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = 73; // 72 matches + 1 champion
+  const done = Object.keys(predictions).length + (selectedChampion ? 1 : 0);
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progress-count').textContent = `${done} / ${total}`;
+  document.getElementById('progress-bar').style.width = `${pct}%`;
+  document.getElementById('btn-submit').disabled = done < total;
+}
+
+// ─── Phase 4: Submit ────────────────────────────
+async function submitPredictions() {
+  const name = document.getElementById('inp-name').value.trim();
+  const surname = document.getElementById('inp-surname').value.trim();
+  const errEl = document.getElementById('form-err');
+  const btn = document.getElementById('btn-submit');
+
+  if (Object.keys(predictions).length < 72 || !selectedChampion) {
+    errEl.textContent = '⚠️ Faltan predicciones. Completa todos los partidos y elige un campeón.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+  errEl.classList.add('hidden');
+
+  const filename = getFilename(name, surname);
+  const payload = {
+    name, surname,
+    emoji: selectedEmoji,
+    submitted_at: new Date().toISOString(),
+    predictions,
+    champion: selectedChampion
+  };
+
+  try {
+    const res = await createFile(
+      `data/predictions/${filename}`,
+      payload,
+      `Predicciones de ${name} ${surname}`
+    );
+
+    if (res.status === 201) {
+      localStorage.setItem(`wc2026_submitted_${filename}`, '1');
+      document.getElementById('success-msg').textContent =
+        `${selectedEmoji} ${name} ${surname} — Campeón elegido: ${selectedChampion}. ¡Buena suerte!`;
+      hide('phase-form');
+      show('phase-success');
+    } else if (res.status === 422) {
+      errEl.textContent = '❌ Parece que ya existe un envío con tu nombre. No se pueden modificar las predicciones.';
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Enviar predicciones →';
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch(e) {
+    errEl.textContent = `⚠️ Error al enviar: ${e.message}. Intenta de nuevo.`;
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+    btn.textContent = 'Enviar predicciones →';
+  }
+}
+
+// ─── Utils ────────────────────────────────────────
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+</script>
+</body>
+</html>

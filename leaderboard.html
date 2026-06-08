@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="300"> <!-- auto-refresh every 5 min -->
+<title>Mundial 2026 — Clasificación</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f3;color:#1a1a1a;min-height:100vh}
+.container{max-width:640px;margin:0 auto;padding:0 16px 40px}
+.page-header{background:#fff;border-bottom:1px solid #e5e5e5;padding:20px 16px;margin:0 -16px 24px;text-align:center}
+.page-header h1{font-size:22px;font-weight:600}
+.page-header p{font-size:13px;color:#888;margin-top:4px}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:20px;margin-bottom:14px}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:#f9f9f9;border:1px solid #ececec;border-radius:8px;padding:12px;text-align:center}
+.stat-val{font-size:22px;font-weight:600;display:block}
+.stat-lbl{font-size:11px;color:#888;margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+.champ-banner{background:#fef9c3;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:16px;text-align:center;font-size:14px;color:#78350f}
+.champ-banner strong{display:block;font-size:16px;margin-top:2px}
+
+/* Ranking table */
+.ranking{width:100%;border-collapse:collapse}
+.ranking thead th{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#aaa;padding:6px 10px;border-bottom:2px solid #f0f0f0;text-align:left}
+.ranking thead th.num{text-align:right}
+.ranking tbody tr{border-bottom:1px solid #f5f5f5;transition:background .1s}
+.ranking tbody tr:last-child{border-bottom:none}
+.ranking tbody tr:hover{background:#fafafa}
+.ranking td{padding:10px 10px;vertical-align:middle}
+.rank-pos{font-size:18px;width:30px}
+.rank-name{font-size:14px;font-weight:500}
+.rank-champion{font-size:12px;color:#888;margin-top:2px}
+.rank-champion.correct{color:#15803d;font-weight:500}
+.pts{font-size:16px;font-weight:700;text-align:right}
+.correct-count{font-size:12px;color:#aaa;text-align:right}
+.badge-champ{display:inline-block;background:#fef3c7;border:1px solid #fde68a;color:#92400e;font-size:11px;padding:1px 6px;border-radius:4px;margin-left:4px}
+
+/* medal colors */
+.medal-1{color:#b7791f}
+.medal-2{color:#9ca3af}
+.medal-3{color:#b45309}
+
+.updated-note{font-size:12px;color:#bbb;text-align:center;margin-top:6px}
+.loading-msg{text-align:center;padding:40px 20px;color:#aaa;font-size:14px}
+.error-msg{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:8px;padding:14px;font-size:14px;text-align:center}
+.no-results{text-align:center;padding:24px;color:#aaa;font-size:14px}
+.back-link{font-size:13px;color:#6366f1;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.back-link:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <h1>🏆 Mundial 2026 · Clasificación</h1>
+    <p id="subtitle">Cargando datos...</p>
+  </div>
+
+  <div id="main-content">
+    <div class="loading-msg">⏳ Cargando clasificación...</div>
+  </div>
+
+  <p class="updated-note" id="updated-note"></p>
+  <p style="text-align:center;margin-top:12px">
+    <a href="index.html" class="back-link">← Enviar predicciones</a>
+  </p>
+</div>
+
+<script>
+const RAW_BASE = 'https://raw.githubusercontent.com/JJRiquelme/worldcup2026_Friends/main';
+
+const MEDALS = ['🥇','🥈','🥉'];
+const MEDAL_CLS = ['medal-1','medal-2','medal-3'];
+
+async function loadLeaderboard() {
+  const content = document.getElementById('main-content');
+  const subtitle = document.getElementById('subtitle');
+  const note = document.getElementById('updated-note');
+
+  try {
+    const res = await fetch(`${RAW_BASE}/data/leaderboard.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const { rankings, matches_played, total_matches, result_champion, updated_at } = data;
+
+    subtitle.textContent = `${matches_played} de ${total_matches} partidos jugados`;
+
+    if (updated_at) {
+      const d = new Date(updated_at);
+      note.textContent = `Actualizado: ${d.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})} ${d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})} UTC`;
+    }
+
+    if (!rankings || rankings.length === 0) {
+      content.innerHTML = '<div class="no-results">Aún no hay predicciones enviadas.</div>';
+      return;
+    }
+
+    // Stats
+    const statsHtml = `
+      <div class="stats-grid">
+        <div class="stat"><span class="stat-val">${rankings.length}</span><span class="stat-lbl">Participantes</span></div>
+        <div class="stat"><span class="stat-val">${matches_played}</span><span class="stat-lbl">Partidos jugados</span></div>
+        <div class="stat"><span class="stat-val">${total_matches - matches_played}</span><span class="stat-lbl">Por jugar</span></div>
+      </div>`;
+
+    // Champion banner (if known)
+    const champHtml = result_champion
+      ? `<div class="champ-banner">🏆 Campeón oficial<strong>${result_champion}</strong></div>`
+      : '';
+
+    // Table
+    const rows = rankings.map((p, i) => {
+      const pos = i < 3
+        ? `<span class="${MEDAL_CLS[i]}">${MEDALS[i]}</span>`
+        : `<span style="font-size:14px;color:#aaa">${i+1}</span>`;
+
+      const champCorrect = result_champion && p.champion === result_champion;
+      const champLabel = p.champion !== '-'
+        ? `<span class="rank-champion ${champCorrect ? 'correct' : ''}">${champCorrect ? '✓' : ''} ${p.champion}${champCorrect ? ' +10' : ''}</span>`
+        : '';
+
+      const champBadge = champCorrect ? `<span class="badge-champ">Campeón ✓</span>` : '';
+
+      return `<tr>
+        <td class="rank-pos">${pos}</td>
+        <td>
+          <div class="rank-name">${p.emoji} ${p.name} ${p.surname}${champBadge}</div>
+          ${champLabel}
+        </td>
+        <td class="pts">${p.points}</td>
+        <td class="correct-count">${p.correct}/${p.total_predicted}</td>
+      </tr>`;
+    }).join('');
+
+    content.innerHTML = `
+      <div class="card">
+        ${statsHtml}
+        ${champHtml}
+        <table class="ranking">
+          <thead>
+            <tr>
+              <th style="width:30px"></th>
+              <th>Participante / Campeón</th>
+              <th class="num">Pts</th>
+              <th class="num">Aciertos</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p style="font-size:11px;color:#ccc;margin-top:12px;text-align:right">3 pts por resultado · +10 pts por campeón</p>
+      </div>`;
+
+  } catch(e) {
+    content.innerHTML = `<div class="error-msg">⚠️ No se pudo cargar la clasificación: ${e.message}<br><br><small>Si acabas de crear el repo, ejecuta el workflow manualmente desde GitHub Actions.</small></div>`;
+    subtitle.textContent = 'Error al cargar';
+  }
+}
+
+loadLeaderboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+name: Update Leaderboard
+
+on:
+  schedule:
+    # Runs at 08:00 UTC = 10:00 Madrid (CEST) every day during the tournament
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    # Also allows manual trigger from GitHub Actions tab
+
+jobs:
+  update-leaderboard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to commit leaderboard.json back to the repo
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Calculate leaderboard
+        run: python scripts/calc_leaderboard.py
+
+      - name: Commit and push leaderboard
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/leaderboard.json
+          # Only commit if there are actual changes
+          git diff --staged --quiet || git commit -m "🏆 Leaderboard update $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
